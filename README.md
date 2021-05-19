@@ -1,5 +1,8 @@
 # 1Password session analyzer plugin for Burp Suite
 
+![test status](https://github.com/1Password/burp-1password-session-analyzer/actions/workflows/test.yml/badge.svg
+)
+
 This repository contains a [Burp](https://portswigger.net/burp) plugin that adds a special message editor view to Burp to analyze and edit requests made to 1Password.com.
 
 ## What is this for?
