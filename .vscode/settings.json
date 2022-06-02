@@ -1,0 +1,6 @@
+{
+    "deepscan.enable": true,
+    "WhiteSource Advise.Diff.BaseBranch": "main",
+    "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace",
+    "workbench.colorTheme": "Oceanic Next (Sublime)"
+}
