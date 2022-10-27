@@ -18,7 +18,7 @@ dependencies {
 
 versioning {
     ext.makeVersion = {
-        if (project.hasProperty('release')) {
+        if(project.hasProperty('release')) {
             def dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
             dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
             def today = dateFormat.format(new Date())

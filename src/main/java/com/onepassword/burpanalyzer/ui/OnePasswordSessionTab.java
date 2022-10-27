@@ -73,7 +73,7 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
             return false;
         }
 
-        if (isRequest) {
+        if(isRequest) {
             final var request = helpers.analyzeRequest(getHttpService(content), content);
             return OnePasswordHeaders.isOnePasswordRequest(request.getHeaders());
         } else { // Responses don't have as clear markers, we're matching on the contents of the CSP
@@ -198,7 +198,7 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
 
             byte[] headerBytes = Arrays.copyOfRange(origTextBytes, 0, bodyOffset);
 
-            if (!helpers.bytesToString(decryptedPayload.getBody()).isBlank()) {
+            if(!helpers.bytesToString(decryptedPayload.getBody()).isBlank()) {
                 final var result = decryptedPayload.encrypt(keyIdentifier, iv, sessionKey);
                 final var text = result.checkResult().map(em -> {
                     try {
@@ -304,7 +304,7 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
                 final var requestMacParseRes = RequestMACParser.parseRequestMac(request);
 
                 if(sessionKey.isPresent()) {
-                    if (requestMacParseRes.didSucceed()) {
+                    if(requestMacParseRes.didSucceed()) {
                         updateRequestMac(sessionKey.get(), requestMacParseRes.getRequestMAC(), messageBytes);
                     } else {
                         ui.showError(requestMacParseRes.getParseFailure().getReadableError());

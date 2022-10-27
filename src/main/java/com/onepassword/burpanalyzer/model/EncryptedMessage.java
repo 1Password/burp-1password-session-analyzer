@@ -55,7 +55,7 @@ public class EncryptedMessage {
 
     @Override
     public String toString() {
-        if (isEmpty) {
+        if(isEmpty) {
             return "EncryptedMessage{empty}";
         } else {
             return "EncryptedMessage{" +
@@ -70,8 +70,8 @@ public class EncryptedMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         EncryptedMessage that = (EncryptedMessage) o;
         if(isEmpty && that.isEmpty) {
             return true;
@@ -105,7 +105,7 @@ public class EncryptedMessage {
     }
 
     public Result<DecryptedPayload, DecryptionError> decrypt(byte[] sessionKey) {
-        if (isEmpty) {
+        if(isEmpty) {
             return new Result<>(new DecryptedPayload(new byte[0]));
         }
 

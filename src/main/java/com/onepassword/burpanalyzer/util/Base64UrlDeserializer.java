@@ -12,7 +12,7 @@ public class Base64UrlDeserializer extends JsonDeserializer<byte[]> {
     public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if(p.hasCurrentToken()) {
             var b64 = p.getText();
-            if (b64 == null || b64.isEmpty()) {
+            if(b64 == null || b64.isEmpty()) {
                 throw new IOException("Empty string");
             }
             try {

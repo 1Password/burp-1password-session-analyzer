@@ -34,8 +34,8 @@ public class DecryptedPayload {
     // DecryptedBody is equal if their JSON is equal if their bodies are valid JSON
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         DecryptedPayload that = (DecryptedPayload) o;
 
         var mapper = new ObjectMapper();
