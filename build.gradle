@@ -10,9 +10,9 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'net.portswigger.burp.extender', name: 'burp-extender-api', version: '2.1'
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.3'
-    implementation group: 'com.fifesoft', name: 'rsyntaxtextarea', version: '3.1.2'
+    implementation group: 'net.portswigger.burp.extender', name: 'burp-extender-api', version: '2.3'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2'
+    implementation group: 'com.fifesoft', name: 'rsyntaxtextarea', version: '3.3.0'
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -27,6 +27,10 @@ versioning {
             return "dev"
         }
     }
+}
+
+jar {
+    duplicatesStrategy = 'exclude'
 }
 
 version versioning.ext.makeVersion()
