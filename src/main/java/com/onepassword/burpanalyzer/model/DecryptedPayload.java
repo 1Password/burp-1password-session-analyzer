@@ -68,8 +68,10 @@ public class DecryptedPayload {
 
         try {
             AesGcm.init(Cipher.ENCRYPT_MODE, keySpec, gcmParamSpec);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+        } catch (InvalidKeyException e) {
             return new Result<>(EncryptionError.INVALID_SESSION_KEY);
+        } catch (InvalidAlgorithmParameterException e) {
+            return new Result<>(EncryptionError.INVALID_JVM_SETUP);
         }
 
         if(body.length == 0) {
