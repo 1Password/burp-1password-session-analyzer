@@ -1,5 +1,8 @@
 package com.onepassword.burpanalyzer.model;
 
+import com.onepassword.burpanalyzer.processing.RequestMACGenerateError;
+import com.onepassword.burpanalyzer.processing.Result;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URL;
@@ -97,7 +100,7 @@ public class RequestMAC {
 
     private final static String DERIVATION_MESSAGE = "He never wears a Mac, in the pouring rain. Very strange.";
 
-    public Optional<String> generateRequestHeader(byte[] sessionKey) {
+    public Result<String, RequestMACGenerateError> generateRequestHeader(byte[] sessionKey) {
         var authString = String.join("|",
             sessionId,
             requestMethod.toString().toUpperCase(Locale.ROOT),
@@ -110,14 +113,14 @@ public class RequestMAC {
         try {
             hmacSHA256forSessionMac = Mac.getInstance("HmacSHA256");
         } catch(NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Can't find HmacSHA256. Invalid JVM setup.");
+            return new Result<>(RequestMACGenerateError.INVALID_JVM_SETUP);
         }
 
         var key = new SecretKeySpec(sessionKey, "HmacSHA256");
         try {
             hmacSHA256forSessionMac.init(key);
         } catch (InvalidKeyException e) {
-            return Optional.empty();
+            return new Result<>(RequestMACGenerateError.INVALID_SESSION_KEY);
         }
         var sessionMACKey = hmacSHA256forSessionMac.doFinal(DERIVATION_MESSAGE.getBytes(StandardCharsets.US_ASCII));
 
@@ -125,13 +128,13 @@ public class RequestMAC {
         try {
             hmacSHA256forFinalMac = Mac.getInstance("HmacSHA256");
         } catch(NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Can't find HmacSHA256. Invalid JVM setup.");
+            return new Result<>(RequestMACGenerateError.INVALID_JVM_SETUP);
         }
 
         try {
             hmacSHA256forFinalMac.init(new SecretKeySpec(sessionMACKey, "HmacSHA256"));
         } catch (InvalidKeyException e) {
-            return Optional.empty();
+            return new Result<>(RequestMACGenerateError.INVALID_SESSION_KEY);
         }
 
         byte[] headerMAC = hmacSHA256forFinalMac.doFinal(authString.getBytes(StandardCharsets.UTF_8));
@@ -139,7 +142,7 @@ public class RequestMAC {
 
         String macString = Base64.getUrlEncoder().encodeToString(headerMACTruncated);
 
-        return Optional.of(String.join("|",
+        return new Result<>(String.join("|",
             versionIndicator.versionStr,
             String.valueOf(requestId),
             macString

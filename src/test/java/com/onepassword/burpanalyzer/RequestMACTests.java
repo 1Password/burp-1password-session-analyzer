@@ -66,9 +66,9 @@ public class RequestMACTests {
         var mac = new RequestMAC(VersionIndicator.v1, this.requestMethod, this.sessionId,
                                     this.requestId, this.url);
 
-        var headerOpt = mac.generateRequestHeader(this.sessionKey);
+        var headerRes = mac.generateRequestHeader(this.sessionKey);
 
-        Assert.assertTrue("MAC generation works", headerOpt.isPresent());
-        Assert.assertEquals("MAC generation generates expected value", this.expected, headerOpt.get());
+        Assert.assertTrue("MAC generation works", headerRes.isOk());
+        Assert.assertEquals("MAC generation generates expected value", this.expected, headerRes.getResult());
     }
 }

@@ -3,21 +3,18 @@ package com.onepassword.burpanalyzer.ui;
 import burp.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onepassword.burpanalyzer.error.DecryptionError;
-import com.onepassword.burpanalyzer.error.EncryptedMessageProcessingError;
-import com.onepassword.burpanalyzer.error.EncryptionError;
-import com.onepassword.burpanalyzer.error.SessionKeyParsingError;
 import com.onepassword.burpanalyzer.model.DecryptedPayload;
 import com.onepassword.burpanalyzer.model.EncryptedMessage;
 import com.onepassword.burpanalyzer.model.RequestMAC;
+import com.onepassword.burpanalyzer.processing.EncryptedMessageProcessingError;
+import com.onepassword.burpanalyzer.processing.Result;
+import com.onepassword.burpanalyzer.processing.SessionKeyParsingError;
 import com.onepassword.burpanalyzer.util.OnePasswordHeaders;
 import com.onepassword.burpanalyzer.util.RequestMACParser;
 import com.onepassword.burpanalyzer.util.SessionStateCache;
-import io.vavr.control.Either;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
@@ -34,8 +31,6 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     private final OnePasswordSessionTabUI ui;
     private final AtomicBoolean isModified;
 
-    private final PrintStream err;
-
     private IHttpService httpService;
     private final SessionStateCache sessionStateCache;
 
@@ -51,15 +46,13 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     private final AtomicReference<String> httpMessageText = new AtomicReference<>();
 
     public OnePasswordSessionTab(IExtensionHelpers helpers, IMessageEditorController controller,
-                                 boolean editable, IBurpExtenderCallbacks callbacks) {
+                                 boolean editable, IBurpExtenderCallbacks unused) {
         this.helpers = helpers;
         this.controller = controller;
         this.editable = editable;
         this.sessionStateCache = SessionStateCache.getInstance();
 
         this.isModified = new AtomicBoolean(false);
-
-        err = new PrintStream(callbacks.getStderr());
 
         ui = new OnePasswordSessionTabUI(this, editable);
     }
@@ -149,17 +142,14 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     private void updateDecryptedPayload(final byte[] sessionKey, final EncryptedMessage encrypted) {
         final var decrypted = encrypted.decrypt(sessionKey);
 
-        final var text = decrypted.fold(
-                DecryptionError::getReadableError,
-                dm -> {
-                    final var body = dm.getBody();
-                    if(body != null && body.length > 0) {
-                        return helpers.bytesToString(body);
-                    } else {
-                        return "";
-                    }
-                }
-        );
+        final var text = decrypted.checkResult().map( dm -> {
+            final var body = dm.getBody();
+            if(body != null && body.length > 0) {
+                return helpers.bytesToString(body);
+            } else {
+                return "";
+            }
+        }).orElseGet(() -> decrypted.getError().getReadableError());
 
         ui.showNoErrors();
         this.decryptedPayloadText.set(text);
@@ -169,8 +159,8 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     private void updateRequestMac(final byte[] sessionKey, final RequestMAC requestMac, final byte[] httpMessage) {
         final var requestMacStr = requestMac.generateRequestHeader(sessionKey);
 
-        if(requestMacStr.isPresent()) {
-            final var requestMacNew = requestMacStr.get();
+        if(requestMacStr.isOk()) {
+            final var requestMacNew = requestMacStr.getResult();
             final var requestStr = helpers.bytesToString(httpMessage);
 
             // Find request MAC positions in original text
@@ -193,7 +183,7 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
                 ui.showError("Failed to find replace MAC in original body.");
             }
         } else {
-            ui.showError("Failed to generate request MAC");
+            ui.showError("Failed to generate request MAC: " + requestMacStr.getError().getReadableError());
         }
     }
 
@@ -210,15 +200,13 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
 
             if (!helpers.bytesToString(decryptedPayload.getBody()).isBlank()) {
                 final var result = decryptedPayload.encrypt(keyIdentifier, iv, sessionKey);
-                final var text = result.fold(
-                        EncryptionError::getReadableError,
-                        em -> {
-                            try {
-                                return mapper.writeValueAsString(em);
-                            } catch (JsonProcessingException e) {
-                                return "Error writing message to JSON.";
-                            }
-                        });
+                final var text = result.checkResult().map(em -> {
+                    try {
+                        return mapper.writeValueAsString(em);
+                    } catch (JsonProcessingException e) {
+                        return "Error writing message to JSON.";
+                    }
+                }).orElseGet(() -> result.getError().getReadableError());
 
                 newText = helpers.bytesToString(headerBytes) + text;
             } else {
@@ -255,30 +243,33 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     }
 
     private byte[] fetchIvOrGenerate() {
-        return fetchEncryptedMessage()
-                .map(EncryptedMessage::getIv).getOrElse(() -> {
+        final var em = fetchEncryptedMessage();
+
+        if(em.isOk()) {
+            return em.getResult().getIv();
+        } else {
             var buf = new byte[12];
             var rand = new SecureRandom();
             rand.nextBytes(buf);
             return buf;
-        });
+        }
     }
 
     private DecryptedPayload decryptedPayload() {
         return new DecryptedPayload(helpers.stringToBytes(this.decryptedPayloadText.get()));
     }
 
-    private Either<EncryptedMessageProcessingError, EncryptedMessage> fetchEncryptedMessage() {
+    private Result<EncryptedMessage, EncryptedMessageProcessingError> fetchEncryptedMessage() {
         final var bodyText = helpers.bytesToString(getBodyBytes());
 
         if(bodyText.isBlank()) {
-            return Either.left(EncryptedMessageProcessingError.EMPTY);
+            return new Result<>(EncryptedMessageProcessingError.EMPTY);
         }
 
         try {
-            return Either.right(mapper.readValue(bodyText, EncryptedMessage.class));
+            return new Result<>(mapper.readValue(bodyText, EncryptedMessage.class));
         } catch (IOException e) {
-            return Either.left(EncryptedMessageProcessingError.INVALID_BODY);
+            return new Result<>(EncryptedMessageProcessingError.INVALID_BODY);
         }
     }
 
@@ -347,22 +338,22 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
     }
 
     public void processSessionKeyUpdate(final String input) {
-        final var sessionKey = parseSessionKey(input);
+        final var parsedSessionKey = parseSessionKey(input);
         final var keyId = fetchKeyId();
         final var encryptedMessage = fetchEncryptedMessage();
 
-        if(sessionKey.isRight()) {
-            final var sk = sessionKey.get();
+        if(parsedSessionKey.isOk()) {
+            final var sk = parsedSessionKey.getResult();
 
             if(keyId != null && !keyId.isBlank()) {
                 sessionStateCache.setSessionKey(keyId, sk);
-            } else if(encryptedMessage.isRight()) {
-                sessionStateCache.setSessionKey(encryptedMessage.get().getKeyIdentifier(), sk);
+            } else if(encryptedMessage.isOk()) {
+                sessionStateCache.setSessionKey(encryptedMessage.getResult().getKeyIdentifier(), sk);
             }
 
             this.sessionKey.set(sk);
 
-            if(encryptedMessage.isRight()) {
+            if(encryptedMessage.isOk()) {
                 final var messageBytes = helpers.stringToBytes(this.httpMessageText.get());
 
                 new Thread(() -> {
@@ -376,31 +367,30 @@ public class OnePasswordSessionTab implements IMessageEditorTab {
                         }
                     }
 
-                    updateDecryptedPayload(sk, encryptedMessage.get());
+                    updateDecryptedPayload(sk, encryptedMessage.getResult());
                 }).start();
-            } else if(encryptedMessage.getLeft() == EncryptedMessageProcessingError.EMPTY) {
+            } else if(encryptedMessage.getError().equals(EncryptedMessageProcessingError.EMPTY)) {
                 ui.showNoErrors(); // Don't show errors when we can't decrypt an empty message
             } else {
-                ui.showError(encryptedMessage.getLeft().getReadableError());
+                ui.showError(encryptedMessage.getError().getReadableError());
             }
         } else {
-            ui.showError(sessionKey.getLeft().getReadableError());
+            ui.showError(parsedSessionKey.getError().getReadableError());
         }
     }
 
-    private Either<SessionKeyParsingError, byte[]> parseSessionKey(final String input) {
-        return switch(input.length()) {
-            case 43 -> {
+    private Result<byte[], SessionKeyParsingError> parseSessionKey(final String input) {
+        switch(input.length()) {
+            case 43:
                 var decoded = Base64.getUrlDecoder().decode(input);
                 if(decoded != null) {
-                    yield Either.right(decoded);
+                    return new Result<>(decoded);
                 } else {
-                    yield Either.left(SessionKeyParsingError.INVALID_BASE64_URL);
+                    return new Result<>(SessionKeyParsingError.INVALID_BASE64_URL);
                 }
-            }
-            case 0 -> Either.left(SessionKeyParsingError.EMPTY);
-            default -> Either.left(SessionKeyParsingError.INVALID_LENGTH);
-        };
+            case 0: return new Result<>(SessionKeyParsingError.EMPTY);
+            default: return new Result<>(SessionKeyParsingError.INVALID_LENGTH);
+        }
     }
 
     public void processDecryptedMessageUpdate(final String input) {
