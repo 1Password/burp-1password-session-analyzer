@@ -76,9 +76,9 @@ public class EncryptedMessageTests {
         var decryptedJson = "{\"sessionID\":\"HJM32R3ZHFD6HCXYIEEXSM7EBA\",\"clientVerifyHash\":\"fNLywld9ZIMgv1tEyO2DRTtqZ8shnvBEvjm_kEQDjLM\",\"client\":\"1Password for Web/938\",\"device\":{\"uuid\":\"x6w4d6q5sletp2udhklafgu3zy\",\"clientName\":\"1Password for Web\",\"clientVersion\":\"938\",\"name\":\"Firefox\",\"model\":\"84.0\",\"osName\":\"MacOSX\",\"osVersion\":\"10.16\",\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.16; rv:84.0) Gecko/20100101 Firefox/84.0\"}}";
         var plaintextMessage = new DecryptedPayload(decryptedJson.getBytes(StandardCharsets.UTF_8));
 
-        var decryptedMessageOpt = encryptedMessage.decrypt(sessionKey);
-        Assert.assertTrue("Encrypted message must successfully decrypt", decryptedMessageOpt.isRight());
-        Assert.assertEquals("Decrypted messages must be equal", plaintextMessage, decryptedMessageOpt.get());
+        var decryptedMessageRes = encryptedMessage.decrypt(sessionKey);
+        Assert.assertTrue("Encrypted message must successfully decrypt", decryptedMessageRes.isOk());
+        Assert.assertEquals("Decrypted messages must be equal", plaintextMessage, decryptedMessageRes.getResult());
     }
 
     @Test
@@ -96,9 +96,9 @@ public class EncryptedMessageTests {
 
         var plaintextMessage = new DecryptedPayload(decryptedJson.getBytes(StandardCharsets.UTF_8));
 
-        var decryptedMessageOpt = encryptedMessage.decrypt(sessionKey);
-        Assert.assertTrue("Encrypted message must successfully decrypt", decryptedMessageOpt.isRight());
-        Assert.assertEquals("Decrypted messages must be equal", decryptedMessageOpt.get(), plaintextMessage);
+        var decryptedMessageRes = encryptedMessage.decrypt(sessionKey);
+        Assert.assertTrue("Encrypted message must successfully decrypt", decryptedMessageRes.isOk());
+        Assert.assertEquals("Decrypted messages must be equal", decryptedMessageRes.getResult(), plaintextMessage);
     }
 
     @Test
@@ -118,11 +118,10 @@ public class EncryptedMessageTests {
             Base64.getUrlDecoder().decode("VvCwMKlCsazav1NNKH2n7x1GSVLe5WEH4ydL4Mpv3LpSe6sd3XR5KWK2OFwgCQ9RkU95gl5g_pLLkfgv9xKZvX7u9c2SrIo1l_owHd2t04ga31z-XfwioCtX2U_zG4GQd0nOa7ds-uOqjNHrP8hA5Wof21g5L6mHAClRzT0kfCX949LDNNDGqbRqZUj0g4R0s6tJ-RQsA7A2BxCKxVvxemyDAE1tuM6gdSuawbUrRmtXbDaItG-kG7Xmz6o4YsF2Y1xAw3I1BiFy9J9wkTZ5S_ORFZKQ2A8JzTxuyR1ou3WvxW8IpVZDKLgpvrjfYl2RSWwKqfASnTaeBShPn5xCMtPPZydm_j_BQ5isxxAqBp9gWSwV2QAowtAm2jQXQ2K27vCeI1N4q6mpMQ2s7t5kdW_gen7be7HcfPH_i921et1aM2uVleCmd-zYUhrahOS4anxYcKsJTiGll_x0yEBlfVwRrN7M5Sr6-taWuVb8OvvbzPi2ShssJNWEf-FsSq6WMNdGJgc2cE2AFcZJIc8GFwLyoS_z203nqO5zVlFbnD_4_rph22tbids")
         );
 
-        var encryptedMessageOpt = plaintextMessage.encrypt(keyIdentifier, iv, sessionKey);
-        Assert.assertTrue("Message must successfully encrypt", encryptedMessageOpt.isRight());
-        Assert.assertEquals("Encrypted message matches expected", intendedMessage, encryptedMessageOpt.get());
+        var encryptedMessageRes = plaintextMessage.encrypt(keyIdentifier, iv, sessionKey);
+        Assert.assertTrue("Message must successfully encrypt", encryptedMessageRes.isOk());
+        Assert.assertEquals("Encrypted message matches expected", intendedMessage, encryptedMessageRes.getResult());
 
-        var plainMapper = new ObjectMapper();
         var expectedJson = mapper.readTree("{" +
                 "\"kid\": \"HJM32R3ZHFD6HCXYIEEXSM7EBA\",\n" +
                 "\"enc\": \"A256GCM\",\n" +
@@ -130,7 +129,7 @@ public class EncryptedMessageTests {
                 "\"iv\": \"7CLCnKLlFzakf_K4\",\n" +
                 "\"data\": \"VvCwMKlCsazav1NNKH2n7x1GSVLe5WEH4ydL4Mpv3LpSe6sd3XR5KWK2OFwgCQ9RkU95gl5g_pLLkfgv9xKZvX7u9c2SrIo1l_owHd2t04ga31z-XfwioCtX2U_zG4GQd0nOa7ds-uOqjNHrP8hA5Wof21g5L6mHAClRzT0kfCX949LDNNDGqbRqZUj0g4R0s6tJ-RQsA7A2BxCKxVvxemyDAE1tuM6gdSuawbUrRmtXbDaItG-kG7Xmz6o4YsF2Y1xAw3I1BiFy9J9wkTZ5S_ORFZKQ2A8JzTxuyR1ou3WvxW8IpVZDKLgpvrjfYl2RSWwKqfASnTaeBShPn5xCMtPPZydm_j_BQ5isxxAqBp9gWSwV2QAowtAm2jQXQ2K27vCeI1N4q6mpMQ2s7t5kdW_gen7be7HcfPH_i921et1aM2uVleCmd-zYUhrahOS4anxYcKsJTiGll_x0yEBlfVwRrN7M5Sr6-taWuVb8OvvbzPi2ShssJNWEf-FsSq6WMNdGJgc2cE2AFcZJIc8GFwLyoS_z203nqO5zVlFbnD_4_rph22tbids\"\n" +
             "}");
-        var marshalled = mapper.writeValueAsString(encryptedMessageOpt.get());
+        var marshalled = mapper.writeValueAsString(encryptedMessageRes.getResult());
         var parsed = mapper.readTree(marshalled);
 
         Assert.assertEquals("Marshalled JSON should match expected JSON", expectedJson, parsed);
@@ -153,9 +152,9 @@ public class EncryptedMessageTests {
             Base64.getUrlDecoder().decode("ajyndPzqt8mnc2R4x_ZGJSmRY6qqbOKKiEljvvNce1xtHNmc_jdbm5oBbQ")
         );
 
-        var encryptedMessageOpt = plaintextMessage.encrypt(keyIdentifier, iv, sessionKey);
-        Assert.assertTrue("Message must successfully encrypt", encryptedMessageOpt.isRight());
-        Assert.assertEquals("Encrypted message matches expected", intendedMessage, encryptedMessageOpt.get());
+        var encryptedMessageRes = plaintextMessage.encrypt(keyIdentifier, iv, sessionKey);
+        Assert.assertTrue("Message must successfully encrypt", encryptedMessageRes.isOk());
+        Assert.assertEquals("Encrypted message matches expected", intendedMessage, encryptedMessageRes.getResult());
 
         var expectedJson = mapper.readTree("{" +
                 "\"kid\": \"YKQRP2M3HZFPZDNXTHQBYFPB5M\",\n" +
@@ -164,7 +163,7 @@ public class EncryptedMessageTests {
                 "\"iv\": \"tYENu1VjK9bH7Ppn\",\n" +
                 "\"data\": \"ajyndPzqt8mnc2R4x_ZGJSmRY6qqbOKKiEljvvNce1xtHNmc_jdbm5oBbQ\"\n" +
             "}");
-        var marshalled = mapper.readTree(mapper.writeValueAsString(encryptedMessageOpt.get()));
+        var marshalled = mapper.readTree(mapper.writeValueAsString(encryptedMessageRes.getResult()));
 
         Assert.assertEquals("Marshalled JSON should match expected JSON", expectedJson, marshalled);
     }

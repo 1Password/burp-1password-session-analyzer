@@ -1,4 +1,4 @@
-package com.onepassword.burpanalyzer.error;
+package com.onepassword.burpanalyzer.processing;
 
 public enum DecryptionError implements BaseError {
     INVALID_SESSION_KEY("Provided session key can't decrypt this message."),

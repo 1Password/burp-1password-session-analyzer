@@ -1,8 +1,8 @@
 package com.onepassword.burpanalyzer.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onepassword.burpanalyzer.error.EncryptionError;
-import io.vavr.control.Either;
+import com.onepassword.burpanalyzer.processing.EncryptionError;
+import com.onepassword.burpanalyzer.processing.Result;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -34,8 +34,8 @@ public class DecryptedPayload {
     // DecryptedBody is equal if their JSON is equal if their bodies are valid JSON
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         DecryptedPayload that = (DecryptedPayload) o;
 
         var mapper = new ObjectMapper();
@@ -54,13 +54,13 @@ public class DecryptedPayload {
         return Arrays.hashCode(body);
     }
 
-    public Either<EncryptionError, EncryptedMessage> encrypt(String keyIdentifier, byte[] iv, byte[] sessionKey) {
+    public Result<EncryptedMessage, EncryptionError> encrypt(String keyIdentifier, byte[] iv, byte[] sessionKey) {
         Cipher AesGcm;
 
         try {
             AesGcm = Cipher.getInstance("AES/GCM/NoPadding");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            return Either.left(EncryptionError.INVALID_JVM_SETUP);
+            return new Result<>(EncryptionError.INVALID_JVM_SETUP);
         }
 
         var keySpec = new SecretKeySpec(sessionKey, 0, sessionKey.length, "AES");
@@ -68,23 +68,24 @@ public class DecryptedPayload {
 
         try {
             AesGcm.init(Cipher.ENCRYPT_MODE, keySpec, gcmParamSpec);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            return Either.left(EncryptionError.INVALID_SESSION_KEY);
+        } catch (InvalidKeyException e) {
+            return new Result<>(EncryptionError.INVALID_SESSION_KEY);
+        } catch (InvalidAlgorithmParameterException e) {
+            return new Result<>(EncryptionError.INVALID_JVM_SETUP);
         }
 
         if(body.length == 0) {
-            return Either.right(EncryptedMessage.empty());
+            return new Result<>(EncryptedMessage.empty());
         }
 
         byte[] output;
         try {
             output = AesGcm.doFinal(body);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
-            e.printStackTrace();
-            return Either.left(EncryptionError.INVALID_SESSION_KEY);
+            return new Result<>(EncryptionError.INVALID_SESSION_KEY);
         }
 
-        return Either.right(
+        return new Result<>(
             new EncryptedMessage(
                 keyIdentifier, EncryptedMessage.Encryption.AES256_GCM, EncryptedMessage.ContentType.B5_JWK_JSON, iv, output
             ));

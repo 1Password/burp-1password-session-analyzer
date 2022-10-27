@@ -1,4 +1,4 @@
-package com.onepassword.burpanalyzer.error;
+package com.onepassword.burpanalyzer.processing;
 
 public enum RequestMACGenerateError implements BaseError {
     MULTIPLE_SESSION_ID_HEADERS("Found multiple Session ID headers, expecting one."),
@@ -14,7 +14,7 @@ public enum RequestMACGenerateError implements BaseError {
     INVALID_DERIVATION_KEY("The derivation key was not usable.");
 
     RequestMACGenerateError(String readable) { this.readable = readable; }
-    private String readable;
+    private final String readable;
 
     @Override
     public String getReadableError() {

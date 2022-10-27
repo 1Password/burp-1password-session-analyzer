@@ -3,10 +3,10 @@ package com.onepassword.burpanalyzer.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.onepassword.burpanalyzer.error.DecryptionError;
+import com.onepassword.burpanalyzer.processing.DecryptionError;
+import com.onepassword.burpanalyzer.processing.Result;
 import com.onepassword.burpanalyzer.util.Base64UrlDeserializer;
 import com.onepassword.burpanalyzer.util.Base64UrlSerializer;
-import io.vavr.control.Either;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -55,7 +55,7 @@ public class EncryptedMessage {
 
     @Override
     public String toString() {
-        if (isEmpty) {
+        if(isEmpty) {
             return "EncryptedMessage{empty}";
         } else {
             return "EncryptedMessage{" +
@@ -70,8 +70,8 @@ public class EncryptedMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         EncryptedMessage that = (EncryptedMessage) o;
         if(isEmpty && that.isEmpty) {
             return true;
@@ -104,9 +104,9 @@ public class EncryptedMessage {
         return res;
     }
 
-    public Either<DecryptionError, DecryptedPayload> decrypt(byte[] sessionKey) {
+    public Result<DecryptedPayload, DecryptionError> decrypt(byte[] sessionKey) {
         if(isEmpty) {
-            return Either.right(new DecryptedPayload(new byte[0]));
+            return new Result<>(new DecryptedPayload(new byte[0]));
         }
 
         Cipher AesGcm;
@@ -114,7 +114,7 @@ public class EncryptedMessage {
         try {
             AesGcm = Cipher.getInstance("AES/GCM/NoPadding");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            return Either.left(DecryptionError.INVALID_JVM_SETUP);
+            return new Result<>(DecryptionError.INVALID_JVM_SETUP);
         }
 
         var keySpec = new SecretKeySpec(sessionKey, 0, sessionKey.length, "AES");
@@ -123,16 +123,16 @@ public class EncryptedMessage {
         try {
             AesGcm.init(Cipher.DECRYPT_MODE, keySpec, gcmParamSpec);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            return Either.left(DecryptionError.INVALID_SESSION_KEY);
+            return new Result<>(DecryptionError.INVALID_SESSION_KEY);
         }
 
         byte[] output;
         try {
             output = AesGcm.doFinal(data);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
-            return Either.left(DecryptionError.INVALID_SESSION_KEY);
+            return new Result<>(DecryptionError.INVALID_SESSION_KEY);
         }
 
-        return Either.right(new DecryptedPayload(output));
+        return new Result<>(new DecryptedPayload(output));
     }
 }

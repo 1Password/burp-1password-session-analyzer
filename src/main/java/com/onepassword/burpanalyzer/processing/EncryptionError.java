@@ -1,4 +1,4 @@
-package com.onepassword.burpanalyzer.error;
+package com.onepassword.burpanalyzer.processing;
 
 public enum EncryptionError implements BaseError {
     MISSING_SESSION_KEY("No session key available to decrypt with."),

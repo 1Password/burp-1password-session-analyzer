@@ -1,4 +1,4 @@
-package com.onepassword.burpanalyzer.error;
+package com.onepassword.burpanalyzer.processing;
 
 public enum SessionKeyParsingError implements BaseError {
     EMPTY("Session key is not provided."),

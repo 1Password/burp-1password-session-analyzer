@@ -1,4 +1,4 @@
-package com.onepassword.burpanalyzer.error;
+package com.onepassword.burpanalyzer.processing;
 
 public enum EncryptedMessageProcessingError implements BaseError {
     EMPTY("No payload was found."),
