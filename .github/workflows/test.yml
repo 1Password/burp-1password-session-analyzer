@@ -20,3 +20,5 @@ jobs:
           cache: 'gradle'
       - name: Run unit tests
         run: ./gradlew test
+        env:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
