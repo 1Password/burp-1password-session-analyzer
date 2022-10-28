@@ -27,12 +27,12 @@ jobs:
           GRADLE_OPTS: -Dorg.gradle.daemon=false
       - name: Get current timestamp for release
         id: date
-        run: echo "::set-output name=date::$(date --utc +'%Y-%m-%d')"
+        run: echo "DATE=$(date --utc +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
           artifacts: build/libs/1PasswordSessionAnalyzerForBurp-main-*.jar
           omitBody: true
           omitName: true
-          tag: release-${{ steps.date.outputs.date }}
+          tag: release-${{ steps.date.outputs.DATE }}
           token: ${{ secrets.GITHUB_TOKEN }}
