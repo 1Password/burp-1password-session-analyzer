@@ -29,18 +29,13 @@ versioning {
     }
 }
 
-jar {
-    duplicatesStrategy = 'exclude'
-}
-
 version versioning.ext.makeVersion()
 
 task fatJar(type: Jar) {
-    jar {
-        from {
-            configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
+    duplicatesStrategy = 'exclude'
+    archiveBaseName = "${rootProject.name}"
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 test {
