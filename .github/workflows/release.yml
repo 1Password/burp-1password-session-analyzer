@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -23,12 +23,12 @@ jobs:
         run: ./gradlew -Prelease fatJar
       - name: Get current timestamp for release
         id: date
-        run: echo "::set-output name=date::$(date --utc +'%Y-%m-%d')"
+        run: echo "DATE=$(date --utc +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
           artifacts: build/libs/1PasswordSessionAnalyzerForBurp-main-*.jar
           omitBody: true
           omitName: true
-          tag: release-${{ steps.date.outputs.date }}
+          tag: release-${{ steps.date.outputs.DATE }}
           token: ${{ secrets.GITHUB_TOKEN }}
