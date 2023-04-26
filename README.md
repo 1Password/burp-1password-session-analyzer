@@ -40,7 +40,7 @@ The HMAC algorithm currently used for v1 is HMAC-SHA256.
 
 ## Using this plugin
 
-The Burp plugin works with Burp's message editor and contains its own custom implementation of 1Password.com's session management protocol. You activate it by loading the JAR file in Burp's extender tab, like any other Burp plugin.
+The Burp plugin works with Burp's message editor and contains its own custom implementation of 1Password.com's session management protocol. You activate it by loading the JAR file in Burp's extender tab, like any other Burp plugin. Grab the JAR file from the [releases page](https://github.com/1Password/burp-1password-session-analyzer/releases).
 
 When activated, it provides a number of inputs, such as an input for the original HTTP message, and an input for the decrypted payload (if present). It also provides a way to edit the request identifier, the key identifier and the session key itself. Inputting the correct session key will automatically decrypt the message and allow you to inspect and modify payloads and requests.
 
@@ -66,6 +66,8 @@ brew install temurin17
 ```
 
 `./gradlew fatJar` builds this plugin and puts the resulting JAR file in `build/libs`.
+
+If you don't want to build the plugin yourself, you can grab a built version of the JAR from the [releases page](https://github.com/1Password/burp-1password-session-analyzer/releases)
 
 ## How to debug
 To be able to connect a Java debugger to your Burp plugin, you must manually start Burp from your command line. On a Mac, run:
