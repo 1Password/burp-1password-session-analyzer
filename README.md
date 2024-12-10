@@ -4,7 +4,7 @@ This repository contains a [Burp](https://portswigger.net/burp) plugin that adds
 
 ## What is this for?
 
-As we say in our [bounty brief](https://bugcrowd.com/agilebits), 1Password is not your regular web application. The first time security researchers open their HTTP proxy of choice when testing 1Password.com, they soon notice that this does not look like a regular web app at all. Rather than regular HTML or JSON, the server returns opaque blobs of content. When the 1Password.com web app sends a payload to the server, it is also an opaque blob, and any request you tamper with in the slightest returns an error.
+As we say in our [bounty brief](https://1password.com/.well-known/security.txt), 1Password is not your regular web application. The first time security researchers open their HTTP proxy of choice when testing 1Password.com, they soon notice that this does not look like a regular web app at all. Rather than regular HTML or JSON, the server returns opaque blobs of content. When the 1Password.com web app sends a payload to the server, it is also an opaque blob, and any request you tamper with in the slightest returns an error.
 
 This behavior is the result of the security features of 1Password.com. We require every request and response that are specific to a 1Password account to be protected by the account's master password and secret key, which means every bit of data that gets sent is encrypted, and every request is authenticated.
 
