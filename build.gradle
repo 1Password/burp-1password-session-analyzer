@@ -3,7 +3,7 @@ plugins {
     id 'net.nemerosa.versioning' version '3.1.0'
 }
 
-group 'com.1password.burp-analyzer'
+group = 'com.1password.burp-analyzer'
 
 repositories {
     mavenCentral()
@@ -29,7 +29,11 @@ versioning {
     }
 }
 
-version versioning.ext.makeVersion()
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
+}
+
+version = versioning.ext.makeVersion()
 
 task fatJar(type: Jar) {
     duplicatesStrategy = 'exclude'
