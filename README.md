@@ -59,10 +59,10 @@ You might wonder how you obtain the session key from your session on 1Password.c
 
 ## How to build yourself
 
-Make sure you to install Java 17 on your computer. E.g. to install the Eclipse Foundation's OpenJDK 17, on a Mac with Homebrew, run:
+Make sure you to install Java 21 on your computer. E.g. to install the Eclipse Foundation's OpenJDK 21, on a Mac with Homebrew, run:
 ```shell
 brew tap homebrew/cask-versions
-brew install temurin17
+brew install temurin21
 ```
 
 `./gradlew fatJar` builds this plugin and puts the resulting JAR file in `build/libs`.
