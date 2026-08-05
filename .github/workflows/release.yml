@@ -5,14 +5,24 @@ on:
     branches:
       - 'main'
 
+permissions:
+  contents: read
+
 jobs:
   release:
+    permissions:
+      contents: write  # for ncipollo/release-action to create a release
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@e9fbacdec3bb3b6036605a3e6f7995d66773a8c6 # v3.14.2
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -25,7 +35,7 @@ jobs:
         id: date
         run: echo "DATE=$(date --utc +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Publish release
-        uses: ncipollo/release-action@v1
+        uses: step-security/release-action@a0d8e0f90f554c15366ca2c9046bf4090d24adbe # v1.21.0
         with:
           artifacts: build/libs/1PasswordSessionAnalyzerForBurp-main-*.jar
           omitBody: true
